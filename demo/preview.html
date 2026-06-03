@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Yöneticisi — Önizleme (Demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0D0D; --card:#131313; --card2:#171717;
+    --line:#262626; --line2:#1c1c1c;
+    --yellow:#F4DF16; --txt:#f4f4f0; --muted:#8a8a83; --muted2:#5a5a55;
+    --ok:#5fd36a; --r:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:'Bricolage Grotesque',sans-serif;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:22px 22px;min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono',monospace}
+  .switcher{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;gap:2px;
+    padding:10px 14px;align-items:center;background:rgba(13,13,13,.9);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);overflow-x:auto}
+  .switcher .tag{font-size:11px;letter-spacing:.12em;color:var(--muted2);
+    text-transform:uppercase;margin-right:14px;font-weight:700;white-space:nowrap}
+  .switcher button{font-family:'JetBrains Mono',monospace;font-size:12px;background:transparent;
+    border:1px solid var(--line);color:var(--muted);padding:6px 12px;border-radius:4px;
+    cursor:pointer;transition:.15s;white-space:nowrap}
+  .switcher button:hover{border-color:#3a3a3a;color:var(--txt)}
+  .switcher button.active{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700}
+  .stage{padding-top:52px;min-height:100vh}
+  .screen{display:none;animation:fade .4s ease}
+  .screen.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .appbar{display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--line)}
+  .logo{width:38px;height:38px;border-radius:5px;background:var(--yellow);display:grid;
+    place-items:center;color:#000;font-weight:800;font-size:20px;flex-shrink:0}
+  .brand{font-weight:800;font-size:18px;letter-spacing:-.01em}
+  .brand small{display:block;font-size:10px;letter-spacing:.22em;color:var(--muted2);font-weight:500;text-transform:uppercase}
+  .spacer{flex:1}
+  .icon-btn{width:38px;height:38px;border:1px solid var(--line);border-radius:5px;background:var(--card);
+    display:grid;place-items:center;cursor:pointer;color:var(--muted);transition:.15s}
+  .icon-btn:hover{border-color:#3a3a3a;color:var(--txt)}
+  .avatar{width:38px;height:38px;border-radius:5px;background:var(--card2);border:1px solid var(--line);
+    display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--yellow)}
+
+  .login-wrap{min-height:calc(100vh - 52px);display:grid;place-items:center;padding:24px}
+  .login-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:38px 34px}
+  .login-card .logo{width:54px;height:54px;font-size:28px;margin:0 auto 22px}
+  .login-card h1{text-align:center;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .login-card p{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 28px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;font-weight:700}
+  .field input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px 14px;
+    color:var(--txt);font-family:inherit;font-size:14px;outline:none;transition:.15s}
+  .field input:focus{border-color:var(--yellow)}
+  .btn-primary{width:100%;background:var(--yellow);color:#000;border:none;border-radius:4px;padding:13px;
+    font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;margin-top:10px;transition:.15s}
+  .btn-primary:hover{filter:brightness(1.08)}
+
+  .container{max-width:1120px;margin:0 auto;padding:34px 28px 80px}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:12px}
+  .page-head h2{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .page-head .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .crumb{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted2);margin-bottom:8px}
+  .crumb b{color:var(--yellow);font-weight:500}
+  .crumb span{cursor:pointer}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .cat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;cursor:pointer;
+    transition:.18s;position:relative;overflow:hidden;animation:pop .5s ease backwards}
+  .cat:hover{border-color:#383838;transform:translateY(-2px)}
+  .cat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--yellow));opacity:0;transition:.18s}
+  .cat:hover::after{opacity:1}
+  .cat .ci{width:46px;height:46px;border-radius:8px;display:grid;place-items:center;margin-bottom:16px;
+    background:color-mix(in srgb,var(--accent,var(--yellow)) 14%,transparent);color:var(--accent,var(--yellow))}
+  .cat h3{font-size:16px;font-weight:700;margin-bottom:14px}
+  .cat .meta{display:flex;align-items:center;justify-content:space-between}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);
+    border:1px solid var(--line);padding:3px 9px;border-radius:20px}
+  .cat .go{color:var(--muted2);transition:.18s}
+  .cat:hover .go{color:var(--accent,var(--yellow));transform:translateX(3px)}
+  .cat.add{border-style:dashed;border-color:#2e2e2e;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;color:var(--muted2);min-height:170px;gap:10px}
+  .cat.add:hover{border-color:var(--yellow);color:var(--yellow);transform:none}
+  .cat.add::after{display:none}
+  .cat.add span{font-size:14px;font-weight:700}
+
+  .section-title{font-size:16px;font-weight:800;margin:48px 0 16px}
+
+  .filterbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;align-items:center}
+  .selwrap{position:relative}
+  .selwrap label{position:absolute;top:-7px;left:10px;background:var(--bg);padding:0 5px;font-size:9px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:700;z-index:1}
+  .sel{appearance:none;background:var(--card);border:1px solid var(--line);border-radius:5px;color:var(--txt);
+    font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 38px 11px 14px;cursor:pointer;outline:none;min-width:120px}
+  .sel.on{border-color:var(--yellow);color:var(--yellow)}
+  .selwrap .chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+  .count-pill{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .count-pill b{color:var(--txt)}
+
+  .files{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .file{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;
+    flex-direction:column;gap:12px;transition:.15s;animation:pop .5s ease backwards}
+  .file:hover{border-color:#383838}
+  .file .top{display:flex;gap:12px;align-items:flex-start}
+  .xicon{width:40px;height:40px;border-radius:6px;background:#0e2417;border:1px solid #1c4a30;display:grid;
+    place-items:center;color:#3ec06b;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px}
+  .file .name{font-size:14px;font-weight:700;line-height:1.3;word-break:break-word}
+  .file .info{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap}
+  .file .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line2);padding-top:11px}
+  .macro-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ok);display:flex;align-items:center;gap:5px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .open-btn{background:var(--yellow);color:#000;border:none;border-radius:4px;padding:7px 16px;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+  .open-btn:hover{filter:brightness(1.08)}
+
+  /* settings */
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:24px}
+  .tabs button{font-family:'JetBrains Mono',monospace;font-size:12px;background:transparent;border:1px solid var(--line);
+    color:var(--muted);padding:8px 14px;border-radius:5px;cursor:pointer}
+  .tabs button.active{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700}
+  .srow{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;margin-bottom:8px}
+  .srow .mini{width:28px;height:28px;border-radius:5px;border:1px solid var(--line);background:var(--card2);color:var(--muted);
+    display:grid;place-items:center;cursor:pointer;font-size:13px}
+  .roleSel{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:12px}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch{width:30px;height:30px;border-radius:6px;border:2px solid transparent;cursor:pointer}
+  .swatch.sel{border-color:var(--txt)}
+
+  .modal{position:fixed;inset:0;z-index:300;background:rgba(5,5,5,.7);backdrop-filter:blur(4px);display:none;flex-direction:column;animation:fade .25s ease}
+  .modal.show{display:flex}
+  .modal-bar{display:flex;align-items:center;gap:14px;padding:13px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+  .modal-bar .fn{font-weight:700;font-size:14px}
+  .modal-bar .stat{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ok);display:flex;align-items:center;gap:6px}
+  .modal-bar .x{margin-left:auto;cursor:pointer;color:var(--muted);width:34px;height:34px;border:1px solid var(--line);
+    border-radius:5px;display:grid;place-items:center;transition:.15s}
+  .modal-bar .x:hover{border-color:#e0584f;color:#e0584f}
+  .modal-body{flex:1;position:relative;background:#1b1b1b;overflow:hidden}
+  .xl{height:100%;display:flex;flex-direction:column;background:#fff;color:#222;font-family:'JetBrains Mono',monospace}
+  .xl-toolbar{background:#217346;color:#fff;padding:6px 12px;font-size:12px;display:flex;gap:18px;align-items:center;flex-shrink:0}
+  .xl-ribbon{background:#f3f2f1;border-bottom:1px solid #d8d8d8;padding:5px 12px;font-size:11px;color:#444;display:flex;gap:16px;flex-shrink:0}
+  .xl-ribbon span{padding:3px 8px;border-radius:3px}
+  .xl-ribbon .macro{background:#fff4c2;border:1px solid #e8d36a;color:#7a5e00;font-weight:700;cursor:pointer}
+  .xl-grid{flex:1;overflow:auto}
+  table.sheet{border-collapse:collapse;font-size:11px;width:100%}
+  table.sheet th{background:#f3f2f1;border:1px solid #d8d8d8;color:#666;font-weight:500;padding:3px 6px;position:sticky;top:0}
+  table.sheet td{border:1px solid #e3e3e3;padding:3px 8px;min-width:80px;height:22px;color:#333}
+  table.sheet td.rowh{background:#f3f2f1;color:#666;text-align:center;min-width:30px}
+  table.sheet td.yel{background:#fff7cc}
+  table.sheet td.tot{font-weight:700;background:#eef6f0}
+  .xl-tabs{background:#f3f2f1;border-top:1px solid #d8d8d8;padding:4px 12px;font-size:11px;display:flex;gap:4px;flex-shrink:0}
+  .xl-tabs span{padding:3px 10px;border:1px solid transparent}
+  .xl-tabs .act{background:#fff;border-color:#d8d8d8;border-bottom-color:#fff;font-weight:700;color:#217346}
+  .overlay-note{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(13,13,13,.92);
+    border:1px solid var(--line);border-radius:6px;padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--muted);display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .overlay-note b{color:var(--yellow);font-weight:500}
+  .banner{max-width:1120px;margin:14px auto 0;padding:10px 28px;color:var(--muted2);font-size:11px;font-family:'JetBrains Mono',monospace}
+  svg{display:block}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <span class="tag">Önizleme · Demo</span>
+  <button onclick="show('login',this)">1 · Giriş</button>
+  <button class="active" onclick="show('home',this)">2 · Ana Ekran</button>
+  <button onclick="show('cat',this)">3 · Kategori</button>
+  <button onclick="openFile('ETLIK_SUBAT_HESAP.xlsm',true)">4 · Dosya Açık</button>
+  <button onclick="show('settings',this)">5 · Ayarlar</button>
+</div>
+
+<div class="stage">
+
+  <!-- 1. LOGIN -->
+  <section class="screen" id="login">
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="logo">B</div>
+        <h1>Excel Yöneticisi</h1>
+        <p>Devam etmek için giriş yapın</p>
+        <div class="field"><label>E-posta</label><input type="email" value="batuhan@punchyazilim.com"></div>
+        <div class="field"><label>Şifre</label><input type="password" value="••••••••••"></div>
+        <button class="btn-primary" onclick="go('home',1)">Giriş Yap</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. HOME -->
+  <section class="screen show" id="home">
+    <div class="appbar">
+      <div class="logo">B</div>
+      <div class="brand">Excel Yöneticisi<small>Punch Yazılım</small></div>
+      <div class="spacer"></div>
+      <div class="icon-btn" title="Ara" onclick="alert('Genel arama: dosya adına göre arama açılır')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="icon-btn" title="Ayarlar" onclick="go('settings',4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="avatar">BY</div>
+    </div>
+    <div class="container">
+      <div class="page-head"><div><h2>Kategoriler</h2><div class="sub">Bir kategoriye tıklayarak dosyalara ulaşın</div></div></div>
+      <div class="grid">
+        <div class="cat" style="--accent:#F4DF16;animation-delay:.04s" onclick="go('cat',2)">
+          <div class="ci"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <h3>Muhasebe</h3><div class="meta"><span class="badge mono">48 dosya</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+        </div>
+        <div class="cat" style="--accent:#5fb8ff;animation-delay:.08s" onclick="go('cat',2)">
+          <div class="ci"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+          <h3>Raporlar</h3><div class="meta"><span class="badge mono">23 dosya</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+        </div>
+        <div class="cat" style="--accent:#ff8f5f;animation-delay:.12s" onclick="go('cat',2)">
+          <div class="ci"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+          <h3>Stok</h3><div class="meta"><span class="badge mono">15 dosya</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+        </div>
+        <div class="cat" style="--accent:#b88dff;animation-delay:.16s" onclick="go('cat',2)">
+          <div class="ci"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Personel</h3><div class="meta"><span class="badge mono">9 dosya</span><span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></div>
+        </div>
+        <div class="cat add" onclick="alert('Yeni kategori: ad + ikon yükle (Firebase Storage) + renk seç + sıra')">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Kategori Ekle</span>
+        </div>
+      </div>
+
+      <div class="section-title">Son Açılanlar</div>
+      <div class="files">
+        <div class="file"><div class="top"><div class="xicon">xlsm</div><div><div class="name">ETLIK_SUBAT_HESAP.xlsm</div><div class="info"><span>02.2026</span><span>·</span><span>1.2 MB</span><span>·</span><span>v4</span></div></div></div><div class="row"><span class="macro-tag"><span class="dot"></span>Makro aktif</span><button class="open-btn" onclick="openFile('ETLIK_SUBAT_HESAP.xlsm',true)">Aç</button></div></div>
+        <div class="file"><div class="top"><div class="xicon" style="background:#0e1d24;border-color:#1c3a4a;color:#3ea0c0">xlsx</div><div><div class="name">TEDARIKCI_OZET.xlsx</div><div class="info"><span>02.2026</span><span>·</span><span>320 KB</span><span>·</span><span>v1</span></div></div></div><div class="row"><span class="macro-tag" style="color:var(--muted2)">— makrosuz</span><button class="open-btn" onclick="openFile('TEDARIKCI_OZET.xlsx',false)">Aç</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CATEGORY -->
+  <section class="screen" id="cat">
+    <div class="appbar">
+      <div class="logo">B</div>
+      <div class="brand">Excel Yöneticisi<small>Punch Yazılım</small></div>
+      <div class="spacer"></div>
+      <div class="icon-btn" onclick="alert('Genel arama')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <div class="icon-btn" onclick="go('settings',4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="avatar">BY</div>
+    </div>
+    <div class="container">
+      <div class="crumb"><span onclick="go('home',1)">Ana Ekran</span> / <b>Muhasebe</b></div>
+      <div class="page-head"><div><h2>Muhasebe</h2><div class="sub">Yıl ve ay seçerek dosyaları filtreleyin</div></div>
+        <button class="open-btn" style="padding:10px 18px" onclick="alert('Excel Yükle: sürükle-bırak, yıl/ay otomatik tahmin, .xlsx/.xlsm/.csv → /api/upload')">+ Excel Yükle</button></div>
+      <div class="filterbar">
+        <div class="selwrap"><label>Yıl</label><select class="sel on"><option>2026</option><option>2025</option></select><span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+        <div class="selwrap"><label>Ay</label><select class="sel on"><option>Şubat</option><option>Ocak</option><option>Mart</option></select><span class="chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+        <span class="count-pill"><b>4</b> dosya · Şubat 2026</span>
+      </div>
+      <div class="files">
+        <div class="file" style="animation-delay:.04s"><div class="top"><div class="xicon">xlsm</div><div><div class="name">ETLIK_SUBAT_HESAP.xlsm</div><div class="info"><span>02.2026</span><span>·</span><span>1.2 MB</span><span>·</span><span>v4</span></div></div></div><div class="row"><span class="macro-tag"><span class="dot"></span>Makro aktif</span><button class="open-btn" onclick="openFile('ETLIK_SUBAT_HESAP.xlsm',true)">Aç</button></div></div>
+        <div class="file" style="animation-delay:.09s"><div class="top"><div class="xicon">xlsm</div><div><div class="name">GARANTI_TRANSFER.xlsm</div><div class="info"><span>02.2026</span><span>·</span><span>740 KB</span><span>·</span><span>v2</span></div></div></div><div class="row"><span class="macro-tag"><span class="dot"></span>Makro aktif</span><button class="open-btn" onclick="openFile('GARANTI_TRANSFER.xlsm',true)">Aç</button></div></div>
+        <div class="file" style="animation-delay:.14s"><div class="top"><div class="xicon" style="background:#0e1d24;border-color:#1c3a4a;color:#3ea0c0">xlsx</div><div><div class="name">TEDARIKCI_OZET.xlsx</div><div class="info"><span>02.2026</span><span>·</span><span>320 KB</span><span>·</span><span>v1</span></div></div></div><div class="row"><span class="macro-tag" style="color:var(--muted2)">— makrosuz</span><button class="open-btn" onclick="openFile('TEDARIKCI_OZET.xlsx',false)">Aç</button></div></div>
+        <div class="file" style="animation-delay:.19s"><div class="top"><div class="xicon">xlsm</div><div><div class="name">BORDRO_SUBAT.xlsm</div><div class="info"><span>02.2026</span><span>·</span><span>980 KB</span><span>·</span><span>v3</span></div></div></div><div class="row"><span class="macro-tag"><span class="dot"></span>Makro aktif</span><button class="open-btn" onclick="openFile('BORDRO_SUBAT.xlsm',true)">Aç</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. SETTINGS -->
+  <section class="screen" id="settings">
+    <div class="appbar">
+      <div class="logo">B</div>
+      <div class="brand">Excel Yöneticisi<small>Punch Yazılım</small></div>
+      <div class="spacer"></div>
+      <div class="avatar">BY</div>
+    </div>
+    <div class="container">
+      <div class="crumb"><span onclick="go('home',1)">Ana Ekran</span> / <b>Ayarlar</b></div>
+      <h2 style="font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:26px">Ayarlar</h2>
+      <div class="tabs">
+        <button class="active" onclick="stab('brand',this)">Marka</button>
+        <button onclick="stab('cats',this)">Kategoriler</button>
+        <button onclick="stab('users',this)">Kullanıcılar</button>
+        <button onclick="stab('trash',this)">Çöp Kutusu</button>
+      </div>
+
+      <div id="s-brand" class="sbody">
+        <div style="max-width:460px;display:flex;flex-direction:column;gap:18px">
+          <div class="field"><label>Uygulama Adı</label><input value="Excel Yöneticisi"></div>
+          <div><label class="mono" style="display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;font-weight:700">Logo</label>
+            <div style="display:flex;align-items:center;gap:14px"><div class="logo" style="width:54px;height:54px;font-size:24px;border-radius:6px">B</div><button class="open-btn" style="background:var(--bg);color:var(--txt);border:1px solid var(--line)">Logo Yükle</button></div></div>
+          <div><label class="mono" style="display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;font-weight:700">Ana Renk</label>
+            <div class="swatches"><span class="swatch sel" style="background:#F4DF16"></span><span class="swatch" style="background:#5fb8ff"></span><span class="swatch" style="background:#ff8f5f"></span><span class="swatch" style="background:#b88dff"></span><span class="swatch" style="background:#5fd36a"></span><span class="swatch" style="background:#ff6b8a"></span></div></div>
+          <button class="btn-primary">Kaydet</button>
+        </div>
+      </div>
+
+      <div id="s-cats" class="sbody" style="display:none">
+        <div class="srow"><span style="width:18px;height:18px;border-radius:4px;background:#F4DF16"></span><span style="flex:1;font-weight:600">Muhasebe</span><span class="mini">↑</span><span class="mini">↓</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+        <div class="srow"><span style="width:18px;height:18px;border-radius:4px;background:#5fb8ff"></span><span style="flex:1;font-weight:600">Raporlar</span><span class="mini">↑</span><span class="mini">↓</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+        <div class="srow"><span style="width:18px;height:18px;border-radius:4px;background:#ff8f5f"></span><span style="flex:1;font-weight:600">Stok</span><span class="mini">↑</span><span class="mini">↓</span><span class="mini">✎</span><span class="mini">🗑</span></div>
+      </div>
+
+      <div id="s-users" class="sbody" style="display:none">
+        <div class="srow"><div style="flex:1"><div style="font-weight:600">Batuhan Yılmaz</div><div class="mono" style="font-size:11px;color:var(--muted2)">batuhan@punchyazilim.com</div></div><select class="roleSel" style="color:var(--yellow)"><option>admin</option><option>viewer</option></select></div>
+        <div class="srow"><div style="flex:1"><div style="font-weight:600">Ayşe Demir</div><div class="mono" style="font-size:11px;color:var(--muted2)">ayse@punchyazilim.com</div></div><select class="roleSel"><option>viewer</option><option>admin</option></select></div>
+      </div>
+
+      <div id="s-trash" class="sbody" style="display:none">
+        <div class="mono" style="font-size:11px;color:var(--muted2);margin-bottom:8px">Silinen dosyalar 30 gün saklanır, sonra kalıcı temizlenir.</div>
+        <div class="srow"><div style="flex:1"><div style="font-weight:600">ESKI_RAPOR_OCAK.xlsx</div><div class="mono" style="font-size:11px;color:var(--muted2)">210 KB · 27 gün kaldı</div></div><button class="open-btn" style="background:var(--bg);color:var(--txt);border:1px solid var(--line)">Geri Al</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- 4. FILE OPEN MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-bar">
+    <div class="logo" style="width:30px;height:30px;font-size:16px;border-radius:4px">B</div>
+    <div class="fn" id="modalName">ETLIK_SUBAT_HESAP.xlsm</div>
+    <div class="stat"><span class="dot"></span><span id="modalStat">Masaüstü Excel oturumu · Makrolar çalışıyor</span></div>
+    <div class="x" onclick="closeFile()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+  </div>
+  <div class="modal-body">
+    <div class="xl">
+      <div class="xl-toolbar"><b>Excel</b> — <span id="xlName">ETLIK_SUBAT_HESAP.xlsm</span> — Korumalı Görünüm Kapalı</div>
+      <div class="xl-ribbon"><span>Dosya</span><span>Giriş</span><span>Ekle</span><span>Formüller</span><span>Veri</span><span class="macro">▶ Raporu Oluştur (Makro)</span><span class="macro">▶ Transferleri Çek</span></div>
+      <div class="xl-grid"><table class="sheet">
+        <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td class="rowh">1</td><td><b>ŞUBE</b></td><td><b>PİDE</b></td><td><b>AYRAN</b></td><td><b>ÇAY</b></td><td><b>CİRO</b></td></tr>
+        <tr><td class="rowh">2</td><td>Etlik</td><td class="yel">312</td><td class="yel">188</td><td class="yel">420</td><td class="tot">₺54.240</td></tr>
+        <tr><td class="rowh">3</td><td>Demetevler</td><td class="yel">287</td><td class="yel">165</td><td class="yel">390</td><td class="tot">₺49.870</td></tr>
+        <tr><td class="rowh">4</td><td>Bahçelievler</td><td class="yel">256</td><td class="yel">142</td><td class="yel">355</td><td class="tot">₺44.110</td></tr>
+        <tr><td class="rowh">5</td><td>Batıkent</td><td class="yel">198</td><td class="yel">120</td><td class="yel">300</td><td class="tot">₺36.500</td></tr>
+        <tr><td class="rowh">6</td><td><b>TOPLAM</b></td><td class="tot">1053</td><td class="tot">615</td><td class="tot">1465</td><td class="tot">₺184.720</td></tr>
+      </table></div>
+      <div class="xl-tabs"><span class="act">Hesap</span><span>Özet</span><span>Bordro</span><span>Grafik</span></div>
+    </div>
+    <div class="overlay-note"><b>◆</b> Burada Guacamole iframe'i ile sunucudaki gerçek Excel çalışır — makro butonları aktif</div>
+  </div>
+</div>
+
+<script>
+  function show(id, btn){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    document.getElementById(id).classList.add('show');
+    document.querySelectorAll('.switcher button').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    window.scrollTo(0,0);
+  }
+  function go(id, idx){ show(id, document.querySelectorAll('.switcher button')[idx]); }
+  function openFile(name, macro){
+    document.getElementById('modalName').textContent=name;
+    document.getElementById('xlName').textContent=name;
+    document.getElementById('modalStat').textContent = macro ? 'Masaüstü Excel oturumu · Makrolar çalışıyor' : 'Masaüstü Excel oturumu';
+    document.getElementById('modal').classList.add('show');
+  }
+  function closeFile(){ document.getElementById('modal').classList.remove('show'); }
+  function stab(id, btn){
+    document.querySelectorAll('.sbody').forEach(s=>s.style.display='none');
+    document.getElementById('s-'+id).style.display='block';
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
