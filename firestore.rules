@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Branding / app settings: everyone signed-in reads, only admins write.
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Users: signed-in users may read the directory (needed for role checks &
+    // the admin user list). A user may create ONLY their own profile, and only
+    // as a viewer. Role changes (admin promotion) require an existing admin.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'viewer';
+      allow update, delete: if isAdmin();
+    }
+
+    // Categories: signed-in read; admin-only writes.
+    match /categories/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Files metadata: signed-in read. Creation/replacement happens through the
+    // server (Admin SDK, which bypasses these rules). Admins may also soft-delete
+    // / restore / revert from the client.
+    match /files/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // Per-user "recently opened" list, owned by the user.
+    match /users/{uid}/recent/{fileId} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+  }
+}

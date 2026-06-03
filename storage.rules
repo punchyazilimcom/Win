@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024; // 5 MB
+    }
+
+    // Brand logo: signed-in read, admin upload (images only).
+    match /branding/{file=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isImage();
+    }
+
+    // Category icons: signed-in read, admin upload (images only).
+    match /category-icons/{file=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isImage();
+    }
+
+    // Everything else: signed-in read, admin write by default.
+    match /{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
