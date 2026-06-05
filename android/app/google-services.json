@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "kefo-baba-takipte",
-    "storage_bucket": "kefo-baba-takipte.appspot.com"
+    "project_number": "348305859642",
+    "project_id": "kefo-baba-takip",
+    "storage_bucket": "kefo-baba-takip.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:348305859642:android:55f7233fbea2d0eb958103",
         "android_client_info": {
           "package_name": "com.punchyazilim.kefobaba"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDUMMY-PLACEHOLDER-KEY-REPLACE-ME-000000"
+          "current_key": "AIzaSyCyTsCNaWSaXzILBdWb3YwixJAYHeNP4L0"
         }
       ],
       "services": {
