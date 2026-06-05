@@ -1,0 +1,32 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+app/build/
+*/build/
+
+# Kotlin
+.kotlin/
+
+# Keystore (imzalama anahtarlarını repoya koymayın)
+*.jks
+*.keystore
+
+# Firebase
+.firebase/
+functions/node_modules/
+functions/lib/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# NOT: app/google-services.json yer tutucu olarak repoda tutuluyor.
+# Gerçek projede kendi dosyanızla değiştirin.

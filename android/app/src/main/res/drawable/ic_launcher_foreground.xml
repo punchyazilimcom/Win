@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Koruyucu kalkan (ebeveyn kontrolü simgesi) — sarı vurgu -->
+    <group android:scaleX="0.55" android:scaleY="0.55" android:pivotX="54" android:pivotY="54">
+        <path
+            android:fillColor="#F4DF16"
+            android:pathData="M54,18 L84,30 L84,54 C84,72 70,86 54,92 C38,86 24,72 24,54 L24,30 Z" />
+        <path
+            android:fillColor="#000000"
+            android:pathData="M47,64 L38,55 L43,50 L47,54 L65,36 L70,41 Z" />
+    </group>
+</vector>

@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Kefo Baba Takipte — Firestore güvenlik kuralları
+// Model: cihazlar anonim kimlikle oturum açar (request.auth != null). Aile üyeliği
+// familyId bilgisine sahip olmakla kurulur (eşleştirme kodu ile paylaşılır).
+// Not: Daha sıkı izolasyon için üretimde aile-üye eşlemesi (claims/membership) eklenebilir.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Aileler ve alt koleksiyonları
+    match /families/{familyId} {
+      allow read, write: if signedIn();
+
+      match /devices/{deviceId} {
+        allow read, write: if signedIn();
+      }
+
+      match /monitoredApps/{packageName} {
+        allow read, write: if signedIn();
+      }
+
+      match /events/{eventId} {
+        // İstemci olay oluşturabilir/okuyabilir; güncelleme/silme yok.
+        allow read, create: if signedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Eşleştirme kodları (süreli). Oluşturma ve okuma serbest (giriş yapmış cihaz);
+    // silme yalnızca Cloud Function (Admin SDK kuralları atlar).
+    match /pairingCodes/{code} {
+      allow read, create: if signedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

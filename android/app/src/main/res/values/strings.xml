@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Kefo Baba Takipte</string>
+    <string name="brand_signature">PUNCH YAZILIM</string>
+
+    <!-- Erişilebilirlik -->
+    <string name="accessibility_service_label">Kefo Baba — Uygulama İzleme</string>
+    <string name="accessibility_service_description">Bu servis yalnızca seçilen uygulamaların ne zaman açıldığını tespit eder ve ebeveyne bildirim gönderir. Ekran içeriği kaydedilmez. İzleme tamamen şeffaftır.</string>
+
+    <!-- Bildirim kanalları -->
+    <string name="fcm_channel_id">kefo_alerts</string>
+    <string name="fcm_channel_name">Uygulama Bildirimleri</string>
+    <string name="monitor_channel_id">kefo_monitor</string>
+    <string name="monitor_channel_name">İzleme Durumu</string>
+
+    <!-- Kalıcı izleme bildirimi -->
+    <string name="monitor_notification_title">İzleme aktif</string>
+    <string name="monitor_notification_text">Kefo Baba Takipte bu cihazı izliyor. Bu uygulama gizli değildir.</string>
+</resources>
